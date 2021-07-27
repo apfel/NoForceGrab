@@ -1,0 +1,7 @@
+{
+    "name": "NoForceGrab",
+    "description": "Removes Force Grabbing from all objects",
+    "version_number": "1.0.0",
+    "dependencies": [ ],
+    "website_url": "https://github.com/apfel/NoForceGrab"
+}
