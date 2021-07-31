@@ -59,7 +59,7 @@ public class NoForceGrab : MelonMod
         timeEntry.OnValueChanged                    += (_, _new) => updateUpdateWaitTime(_new);
 
         MenuCategory category = ModThatIsNotMod.BoneMenu.MenuManager.CreateCategory("No Force Grab", Color.white);
-        category.CreateBoolElement("Enabled", Color.white, !disableForceGrabRemoval, updateDisableForceGrabRemoval);
+        category.CreateBoolElement("Enabled", Color.white, !disableForceGrabRemoval, (_new) => updateDisableForceGrabRemoval(!_new));
         category.CreateIntElement("Wait time", Color.white, updateWaitTime, updateUpdateWaitTime, 1, 1, 5000, true);
 
         if (!this.disableForceGrabRemoval) waitTimer.Start();

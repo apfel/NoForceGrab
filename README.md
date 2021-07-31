@@ -29,6 +29,10 @@ cmake --build build --config Release    # Builds the Release configuration.
 ```
 
 ## ChangeLog
+1.1.1:
+- Uploaded missing files
+- Fixed a bug that would flip the Enabled status within BoneMenu
+
 1.1.0:
 - Added BoneMenu support
 - Cleaned up some code
