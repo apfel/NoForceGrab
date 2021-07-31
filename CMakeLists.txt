@@ -18,28 +18,36 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10.0)
-project(NoForceGrab CSharp)
+project(NoForceGrab LANGUAGES CSharp VERSION 1.1.0)
 
 set(BONEWORKS_DIR "C:\\Program Files (x86)\\Steam\\steamapps\\common\\BONEWORKS")
 
+if(NOT EXISTS ${BONEWORKS_DIR}/BONEWORKS)
+    message(FATAL_ERROR "Failed to find BONEWORKS at ${BONEWORKS_DIR}.")
+elseif(NOT EXISTS ${BONEWORKS_DIR}/BONEWORKS/MelonLoader/MelonLoader.dll)
+    message(FATAL_ERROR "Failed to find MelonLoader within your copy of BONEWORKS at ${BONEWORKS_DIR}.")
+elseif(NOT EXISTS ${BONEWORKS_DIR}/BONEWORKS/MelonLoader/Managed/Assembly-CSharp.dll)
+    message(FATAL_ERROR "Your copy of BONEWORKS at ${BONEWORKS_DIR} has not been unhollowed yet. Please run the game so that MelonLoader can generate the necessary files.")
+elseif(NOT EXISTS ${BONEWORKS_DIR}/BONEWORKS/Mods/ModThatIsNotMod.dll)
+    message(FATAL_ERROR "Please install ModThatIsNotMod in your copy of BONEWORKS at ${BONEWORKS_DIR}.")
+endif()
+
+configure_file(${CMAKE_CURRENT_LIST_DIR}/Manifest.cs.in ${CMAKE_CURRENT_BINARY_DIR}/Manifest.cs)
+
 add_library(NoForceGrab SHARED
-    ${CMAKE_CURRENT_LIST_DIR}/Manifest.cs
+    ${CMAKE_CURRENT_BINARY_DIR}/Manifest.cs
 
     ${CMAKE_CURRENT_LIST_DIR}/NoForceGrab.cs
 )
 
-target_compile_options(NoForceGrab PRIVATE "/langversion:latest")
+target_compile_options(NoForceGrab PRIVATE -langversion:latest)
 
-set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION "v4.7.2")
-set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCES
-    "Microsoft.CSharp"
-    "System"
-    "System.Core"
-    "System.Data"
-)
+set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_TARGET_FRAMEWORK_VERSION v4.7.2)
+set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCES Microsoft.CSharp System System.Core System.Data)
 
 set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCE_MelonLoader            ${BONEWORKS_DIR}/BONEWORKS/MelonLoader/MelonLoader.dll)
 set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCE_AssemblyCSharp         ${BONEWORKS_DIR}/BONEWORKS/MelonLoader/Managed/Assembly-CSharp.dll)
 set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCE_Il2Cppmscorlib         ${BONEWORKS_DIR}/BONEWORKS/MelonLoader/Managed/Il2Cppmscorlib.dll)
 set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCE_UnhollowerBaseLib      ${BONEWORKS_DIR}/BONEWORKS/MelonLoader/Managed/UnhollowerBaseLib.dll)
 set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCE_UnityEngineCoreModule  ${BONEWORKS_DIR}/BONEWORKS/MelonLoader/Managed/UnityEngine.CoreModule.dll)
+set_property(TARGET NoForceGrab PROPERTY VS_DOTNET_REFERENCE_ModThatIsNotMod        ${BONEWORKS_DIR}/BONEWORKS/Mods/ModThatIsNotMod.dll)

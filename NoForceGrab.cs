@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using MelonLoader;
+using ModThatIsNotMod.BoneMenu;
 using UnityEngine;
 
 public class NoForceGrab : MelonMod
@@ -28,25 +29,40 @@ public class NoForceGrab : MelonMod
 
     Stopwatch waitTimer;
 
+    private void updateDisableForceGrabRemoval(bool _new)
+    {
+        this.disableForceGrabRemoval = _new;
+
+        if (this.disableForceGrabRemoval) this.waitTimer.Stop();
+        else this.waitTimer.Start();
+    }
+
+    private void updateUpdateWaitTime(int _new)
+    {
+        this.updateWaitTime = _new;
+
+        if (!this.disableForceGrabRemoval) this.waitTimer.Reset();
+    }
+
     public override void OnApplicationStart()
     {
-        MelonPreferences.CreateCategory("NoForceGrab", "No Force Grab").CreateEntry<bool>("DisableForceGrabRemoval", false, "Whether to disable the removal of Force Grabbing or not.", false);
-        MelonPreferences.CreateCategory("NoForceGrab", "No Force Grab").CreateEntry<int>("WaitTime", 2000, "How long the update routine has to wait before it starts searching for Force Grab points, in milliseconds.", false);
-
-        MelonPreferences_Entry<bool> disableEntry = MelonPreferences.GetCategory("NoForceGrab").GetEntry<bool>("DisableForceGrabRemoval");
-        this.disableForceGrabRemoval    = disableEntry.Value;
-        disableEntry.OnValueChanged     += (old, _new) => this.disableForceGrabRemoval = _new;
-
-        MelonPreferences_Entry<int> timeEntry = MelonPreferences.GetCategory("NoForceGrab").GetEntry<int>("WaitTime");
-        this.updateWaitTime         = timeEntry.Value;
-        timeEntry.OnValueChanged    += (old, _new) =>
-        {
-            this.updateWaitTime = _new;
-            this.waitTimer?.Reset();
-        };
-
         waitTimer = new Stopwatch();
-        waitTimer.Start();
+
+        MelonPreferences_Category prefCategory = MelonPreferences.CreateCategory("NoForceGrab", "No Force Grab");
+
+        MelonPreferences_Entry<bool> disableEntry   = prefCategory.CreateEntry<bool>("DisableForceGrabRemoval", false, "Disable Force Grab removal", "Whether to disable the removal of Force Grabbing or not.");
+        this.disableForceGrabRemoval                = disableEntry.Value;
+        disableEntry.OnValueChanged                 += (_, _new) => updateDisableForceGrabRemoval(_new);
+
+        MelonPreferences_Entry<int> timeEntry       = prefCategory.CreateEntry<int>("WaitTime", 2000, "Wait Time", "How long the update routine has to wait before it starts searching for Force Grab points, in milliseconds.");
+        this.updateWaitTime                         = timeEntry.Value;
+        timeEntry.OnValueChanged                    += (_, _new) => updateUpdateWaitTime(_new);
+
+        MenuCategory category = ModThatIsNotMod.BoneMenu.MenuManager.CreateCategory("No Force Grab", Color.white);
+        category.CreateBoolElement("Enabled", Color.white, !disableForceGrabRemoval, updateDisableForceGrabRemoval);
+        category.CreateIntElement("Wait time", Color.white, updateWaitTime, updateUpdateWaitTime, 1, 1, 5000, true);
+
+        if (!this.disableForceGrabRemoval) waitTimer.Start();
     }
 
     public override void OnFixedUpdate()
@@ -61,4 +77,7 @@ public class NoForceGrab : MelonMod
 
         this.waitTimer.Restart();
     }
+
+    public override void BONEWORKS_OnLoadingScreen() => this.waitTimer.Reset();
+    public override void OnSceneWasInitialized(int buildIndex, string sceneName) => this.waitTimer.Restart();
 }
