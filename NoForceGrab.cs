@@ -1,4 +1,4 @@
-// Copyright (c) 2021 Apfel
+// Copyright (c) 2021 apfel
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -17,67 +17,48 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-using System.Diagnostics;
+using HarmonyLib;
 using MelonLoader;
 using ModThatIsNotMod.BoneMenu;
 using UnityEngine;
 
+[HarmonyPatch(typeof(StressLevelZero.Interaction.ForcePullGrip), "Start")]
+internal static class ForcePullGripRemovalPatch
+{
+	private static void Postfix(StressLevelZero.Interaction.ForcePullGrip __instance)
+	{
+		if (!NoForceGrab.DisableForceGrabRemoval) Object.Destroy(__instance);
+	}
+}
+
+[HarmonyPatch(typeof(StressLevelZero.Interaction.InteractableIcon), "AddIcon")]
+internal static class InteractableIconRemovalPatch
+{
+	private static void Postfix(StressLevelZero.Interaction.InteractableIcon __instance)
+	{
+		if (!NoForceGrab.DisableForceGrabRemoval && !NoForceGrab.KeepInteractableIcons) Object.Destroy(__instance);
+	}
+}
+
 public class NoForceGrab : MelonMod
 {
-    bool disableForceGrabRemoval = false;
-    int updateWaitTime = 2000;
-
-    Stopwatch waitTimer;
-
-    private void updateDisableForceGrabRemoval(bool _new)
-    {
-        this.disableForceGrabRemoval = _new;
-
-        if (this.disableForceGrabRemoval) this.waitTimer.Stop();
-        else this.waitTimer.Start();
-    }
-
-    private void updateUpdateWaitTime(int _new)
-    {
-        this.updateWaitTime = _new;
-
-        if (!this.disableForceGrabRemoval) this.waitTimer.Reset();
-    }
+    public static bool DisableForceGrabRemoval = false;
+    public static bool KeepInteractableIcons = false;
 
     public override void OnApplicationStart()
     {
-        waitTimer = new Stopwatch();
-
         MelonPreferences_Category prefCategory = MelonPreferences.CreateCategory("NoForceGrab", "No Force Grab");
 
-        MelonPreferences_Entry<bool> disableEntry   = prefCategory.CreateEntry<bool>("DisableForceGrabRemoval", false, "Disable Force Grab removal", "Whether to disable the removal of Force Grabbing or not.");
-        this.disableForceGrabRemoval                = disableEntry.Value;
-        disableEntry.OnValueChanged                 += (_, _new) => updateDisableForceGrabRemoval(_new);
+        MelonPreferences_Entry<bool> disableEntry   = prefCategory.CreateEntry<bool>("Disabled", false, "Disable Force Grab removal", "Whether to disable the removal of Force Grabbing or not (scene reload required).");
+        DisableForceGrabRemoval                     = disableEntry.Value;
+        disableEntry.OnValueChanged                 += (_, _new) => DisableForceGrabRemoval = _new;
 
-        MelonPreferences_Entry<int> timeEntry       = prefCategory.CreateEntry<int>("WaitTime", 2000, "Wait Time", "How long the update routine has to wait before it starts searching for Force Grab points, in milliseconds.");
-        this.updateWaitTime                         = timeEntry.Value;
-        timeEntry.OnValueChanged                    += (_, _new) => updateUpdateWaitTime(_new);
+        MelonPreferences_Entry<bool> iconEntry  = prefCategory.CreateEntry<bool>("KeepInteractionIcons", false, "Don't remove interaction icons", "Whether to keep the white interaction icons on (previously) force-grabbable game objects or not. (scene reload required).");
+        KeepInteractableIcons                   = iconEntry.Value;
+        iconEntry.OnValueChanged                += (_, _new) => KeepInteractableIcons = _new;
 
         MenuCategory category = ModThatIsNotMod.BoneMenu.MenuManager.CreateCategory("No Force Grab", Color.white);
-        category.CreateBoolElement("Enabled", Color.white, !disableForceGrabRemoval, (_new) => updateDisableForceGrabRemoval(!_new));
-        category.CreateIntElement("Wait time", Color.white, updateWaitTime, updateUpdateWaitTime, 1, 1, 5000, true);
-
-        if (!this.disableForceGrabRemoval) waitTimer.Start();
+        category.CreateBoolElement("Disabled", Color.white, DisableForceGrabRemoval, (_new) => DisableForceGrabRemoval = _new);
+        category.CreateBoolElement("Keep Interaction Icons", Color.white, KeepInteractableIcons, (_new) => KeepInteractableIcons = _new);
     }
-
-    public override void OnFixedUpdate()
-    {
-        if (this.disableForceGrabRemoval || this.waitTimer.Elapsed.TotalMilliseconds < this.updateWaitTime) return;
-
-        StressLevelZero.Interaction.ForcePullGrip grip = Object.FindObjectOfType<StressLevelZero.Interaction.ForcePullGrip>();
-        if (grip != null) Object.Destroy(grip);
-
-        StressLevelZero.Interaction.InteractableIcon icon = Object.FindObjectOfType<StressLevelZero.Interaction.InteractableIcon>();
-        if (icon != null) Object.Destroy(icon);
-
-        this.waitTimer.Restart();
-    }
-
-    public override void BONEWORKS_OnLoadingScreen() => this.waitTimer.Reset();
-    public override void OnSceneWasInitialized(int buildIndex, string sceneName) => this.waitTimer.Restart();
 }

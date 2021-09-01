@@ -1,4 +1,4 @@
-# Copyright (c) 2021 Apfel
+# Copyright (c) 2021 apfel
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,7 @@
 # SOFTWARE.
 
 cmake_minimum_required(VERSION 3.10.0)
-project(NoForceGrab LANGUAGES CSharp VERSION 1.1.1)
+project(NoForceGrab LANGUAGES CSharp VERSION 2.0.0)
 
 set(BONEWORKS_DIR "C:\\Program Files (x86)\\Steam\\steamapps\\common\\BONEWORKS")
 
